@@ -49,13 +49,14 @@ s cups-pdf
 s fastfetch
 s gammastep
 s imv
-s man
 s man-db
 s man-pages
 s parallel
 s reflector
 s typst
 s unrar-free
+s hyprlock
+s img2pdf
 a librewolf-bin
 a zsh-fast-syntax-highlighting
 a shotman
