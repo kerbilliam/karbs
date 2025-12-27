@@ -114,13 +114,13 @@ awk '$1== "s"{print $2}' "$progsfile" | xargs pacman --noconfirm --needed -Syu |
 
 # Install AUR Helper: yay and install AUR packages
 repodir="/home/$user/.local/src"
-mkdir -p "$repodir"
+sudo -u "$user" mkdir -p "$repodir"
 chown -R "$user":wheel "$(dirname "$repodir")"
 manualinstall yay-bin || error "Failed to install AUR helper."
-awk '$1== "a"{print $2}' "$progsfile" | xargs yay -S --noconfirm
+awk '$1== "a"{print $2}' "$progsfile" | xargs sudo "$user" yay -S --noconfirm
 
 # Make sure .*-git AUR packages get updated automatically.
-yay -Y --save --devel
+sudo -u "$user" yay -Y --save --devel
 
 # Install the dotfiles in the user's home directory.
 # --strip-components is to remove the wrapper directory by github.
@@ -128,8 +128,8 @@ yay -Y --save --devel
 if [ -f "$dotfiles" ]; then
     sudo -u "$user" tar -xzf "$dotfiles" --overwrite -C /home/"$user"/
 else
-    sudo -u "$user" curl -Ls "$dotfiles" |
-	tar xzf - --strip-components=1 --overwrite -C /home/"$user"/
+    "$user" curl -Ls "$dotfiles" |
+	sudo -u "$user" tar xzf - --strip-components=1 --overwrite -C /home/"$user"/
 fi
 rm -rf "/home/$user/README.md" "/home/$user/LICENSE"
 

@@ -4,7 +4,7 @@
 s polkit
 s sway
 s swaybg
-s xorg-wayland
+s xorg-xwayland
 s xdg-desktop-portal
 s xdg-desktop-portal-wlr
 s xdg-desktop-portal-gtk
@@ -26,7 +26,6 @@ s xdg-utils
 s neovim
 s lf
 s wl-clipboard
-s wl-clipboard-persist
 s mpd
 s mpc
 s rmpc
