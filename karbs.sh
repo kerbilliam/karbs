@@ -6,17 +6,20 @@
 
 ### OPTIONS AND VARIABLES ###
 
+# current script directory
+SDIR="$(pwd)"
+
 # Location of dotfiles archive (.tar.gz). Leave empty if not a url.
 dotfiles="https://github.com/kerbilliam/konf/archive/refs/heads/master.tar.gz"
 
 # Location of the program list. Can be a url [http(s)] or file on system.
-progsfile="./progs.txt"
+progsfile="$SDIR/progs.txt"
 
 # Location of the directory for the config files required for remapping capslock.
-interceptiondir="./interception"
+interceptiondir="$SDIR/interception"
 
 # Location of directoy containing pacman hooks
-hooksdir="./hooks"
+hooksdir="$SDIR/hooks"
 
 export TERM=ansi
 RED=$(tput setaf 1)
@@ -51,18 +54,17 @@ error() {
 manualinstall() {
 	# Installs $1 manually. Used only for AUR helper here.
 	# Should be run after repodir is created and var is set.
-	pacman -Qq "$1" && return 0
-	echo "$1 manually."
+	cd "$repodir/$1" || exit 1
 	sudo -u "$user" mkdir -p "$repodir/$1"
 	sudo -u "$user" git -C "$repodir" clone --depth 1 --single-branch \
-		--no-tags -q "https://aur.archlinux.org/$1.git" "$repodir/$1" ||
+		--no-tags "https://aur.archlinux.org/$1.git" "$repodir/$1" ||
 		{
 			cd "$repodir/$1" || return 1
 			sudo -u "$user" git pull --force origin master
 		}
 	cd "$repodir/$1" || exit 1
 	sudo -u "$user" \
-		makepkg --noconfirm -si >/dev/null 2>&1 || return 1
+		makepkg --noconfirm -si || return 1
 }
 
 ### THE ACTUAL SCRIPT ###
@@ -109,7 +111,7 @@ echo "%wheel ALL=(ALL) NOPASSWD: ALL
 Defaults:%wheel,root runcwd=*" >/etc/sudoers.d/karbs-temp
 
 # Install Standard Packages
-awk '$1== "s"{print $2}' "$progsfile" | xargs pacman --noconfirm --needed -Syu ||
+awk '$1== "s"{print $2}' "$progsfile" | xargs -r pacman --noconfirm --needed -Syu ||
 	error "Failed to install standard packages. Exiting..."
 
 # Install AUR Helper: yay and install AUR packages
@@ -117,7 +119,7 @@ repodir="/home/$user/.local/src"
 sudo -u "$user" mkdir -p "$repodir"
 chown -R "$user":wheel "$(dirname "$repodir")"
 manualinstall yay-bin || error "Failed to install AUR helper."
-awk '$1== "a"{print $2}' "$progsfile" | xargs sudo "$user" yay -S --noconfirm
+awk '$1== "a"{print $2}' "$progsfile" | xargs -r sudo -u "$user" yay -S --noconfirm
 
 # Make sure .*-git AUR packages get updated automatically.
 sudo -u "$user" yay -Y --save --devel
@@ -128,7 +130,7 @@ sudo -u "$user" yay -Y --save --devel
 if [ -f "$dotfiles" ]; then
     sudo -u "$user" tar -xzf "$dotfiles" --overwrite -C /home/"$user"/
 else
-    "$user" curl -Ls "$dotfiles" |
+    sudo -u "$user" curl -Ls "$dotfiles" |
 	sudo -u "$user" tar xzf - --strip-components=1 --overwrite -C /home/"$user"/
 fi
 rm -rf "/home/$user/README.md" "/home/$user/LICENSE"
@@ -151,7 +153,7 @@ cp -rv "$interceptiondir" /etc/
 systemctl enable udevmon
 
 # copy pacman hooks
-cp -rv "$hooksdir"/* /etc/pacman.d/hooks/
+cp -rv "$hooksdir" /etc/pacman.d/
 
 # Cleanup
 rm -f /etc/sudoers.d/karbs-temp
