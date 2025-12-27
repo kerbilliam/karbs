@@ -54,7 +54,6 @@ error() {
 manualinstall() {
 	# Installs $1 manually. Used only for AUR helper here.
 	# Should be run after repodir is created and var is set.
-	cd "$repodir/$1" || exit 1
 	sudo -u "$user" mkdir -p "$repodir/$1"
 	sudo -u "$user" git -C "$repodir" clone --depth 1 --single-branch \
 		--no-tags "https://aur.archlinux.org/$1.git" "$repodir/$1" ||
@@ -119,6 +118,7 @@ repodir="/home/$user/.local/src"
 sudo -u "$user" mkdir -p "$repodir"
 chown -R "$user":wheel "$(dirname "$repodir")"
 manualinstall yay-bin || error "Failed to install AUR helper."
+cd "$SDIR"
 awk '$1== "a"{print $2}' "$progsfile" | xargs -r sudo -u "$user" yay -S --noconfirm
 
 # Make sure .*-git AUR packages get updated automatically.
