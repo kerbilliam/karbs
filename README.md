@@ -1,6 +1,12 @@
 # Kerb's Auto-Rice Bootstrapping Scripts (KARBS)
 *Work in Progress*
 
+`karbs.sh` works and has no bugs(?).
+
+Now working on:
+- extra misc scripts (mainly for me)
+- quickstart guide for KARBS
+
 ## Installation:
 
 ```
