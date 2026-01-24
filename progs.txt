@@ -57,6 +57,7 @@ s typst
 s unrar-free
 s hyprlock
 s img2pdf
+s zsh-completions
 a librewolf-bin
 a zsh-fast-syntax-highlighting
 a shotman
