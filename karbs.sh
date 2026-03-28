@@ -68,7 +68,7 @@ manualinstall() {
 
 ### THE ACTUAL SCRIPT ###
 
-[ "$(id -u)" -ne 0 ] && error "You need to run this script as a root."
+[ "$(id -u)" -ne 0 ] && error "You need to run this script as root."
 
 # User confirmation
 printf "Which user are you running KARBS for? "
@@ -140,7 +140,7 @@ chsh -s /bin/zsh "$user" >/dev/null 2>&1
 sudo -u "$user" mkdir -p "/home/$user/.cache/zsh/"
 
 # Create a playlists directory for MPD
-sudo -u "$user" mkdir -p "/home/$user/.config/mpd/playlists/"
+sudo -u "$user" mkdir -p "/home/$user/.config/mpd/playlists"
 
 # Create pacman hooks directory
 mkdir -p /etc/pacman.d/hooks
