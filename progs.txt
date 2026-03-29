@@ -13,7 +13,6 @@ s brightnessctl
 s wireplumber
 s pipewire-pulse
 s pulsemixer
-s swaybg
 s mako
 s waybar
 s fuzzel
@@ -27,7 +26,6 @@ s neovim
 s lf
 s wl-clipboard
 s mpd
-s mpc
 s rmpc
 s mpv
 s hunspell-en_us
@@ -51,13 +49,14 @@ s gammastep
 s imv
 s man-db
 s man-pages
+s man-pages-utils
 s parallel
 s reflector
 s typst
 s unrar-free
 s hyprlock
 s img2pdf
-s zsh-completions
+s ffmpeg
 a librewolf-bin
 a zsh-fast-syntax-highlighting
 a shotman

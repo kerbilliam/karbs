@@ -142,6 +142,11 @@ sudo -u "$user" mkdir -p "/home/$user/.cache/zsh/"
 # Create a playlists directory for MPD
 sudo -u "$user" mkdir -p "/home/$user/.config/mpd/playlists"
 
+# Create directory for optional user installation scripts.
+sudo -u "$user" mkdir -p "/home/$user/karbs"
+cp -r "$SDIR/post-scripts" "/home/$user/karbs"
+chown -R "$user":wheel "/home/$user/karbs"
+
 # Create pacman hooks directory
 mkdir -p /etc/pacman.d/hooks
 
@@ -159,4 +164,6 @@ cp -rv "$hooksdir" /etc/pacman.d/
 rm -f /etc/sudoers.d/karbs-temp
 
 # Last message! Install complete!
-greenout 'KARBS installation complete. Please restart your system to start using KARBS. Have fun!'
+greenout 'KARBS installation complete!'
+yellowout "Optional scripts added to /home/$user/karbs to be ran as $user."
+greenout 'Please restart your system to start using KARBS. Have fun!'
