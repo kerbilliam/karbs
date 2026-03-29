@@ -9,7 +9,7 @@ sudo pacman -S --needed gnupg pinentry git
 # --- 2. Configure GPG Agent ---
 echo "Configuring gpg-agent..."
 mkdir -p "$GPGHOME"
-chmod 700 "$GPGHOME"
+chmod 700 "$GPGHOME" # make safer permissions
 
 cat <<EOF > "$GPGHOME/gpg-agent.conf"
 enable-ssh-support

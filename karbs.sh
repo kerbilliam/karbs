@@ -139,13 +139,10 @@ rm -rf "/home/$user/README.md" "/home/$user/LICENSE"
 chsh -s /bin/zsh "$user" >/dev/null 2>&1
 sudo -u "$user" mkdir -p "/home/$user/.cache/zsh/"
 
-# Create a playlists directory for MPD
-sudo -u "$user" mkdir -p "/home/$user/.config/mpd/playlists"
-
 # Create directory for optional user installation scripts.
 sudo -u "$user" mkdir -p "/home/$user/karbs"
 cp -r "$SDIR/post-scripts" "/home/$user/karbs"
-chown -R "$user":wheel "/home/$user/karbs"
+chown -R "$user" "/home/$user/karbs"
 
 # Create pacman hooks directory
 mkdir -p /etc/pacman.d/hooks
