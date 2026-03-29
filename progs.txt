@@ -38,6 +38,7 @@ s usbutils
 s android-file-transfer
 s ttf-cascadia-code
 s ttf-jetbrains-mono-nerd
+s noto-fonts
 s noto-fonts-emoji
 s openssh
 s pacman-contrib
