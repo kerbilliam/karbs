@@ -71,7 +71,19 @@ EOF
 
 # 2. Start/Restart the agent
 gpgconf --kill gpg-agent
+# Ensure the directory exists and has correct permissions
+mkdir -p "$GNUPGHOME"
+chmod 700 "$GNUPGHOME"
+# mv existing files if auto-generated before env var was set
+mv ~/.gnupg/* "$GNUPGHOME"
+# Create an empty sshcontrol if it doesn't exist
+touch "$GNUPGHOME/sshcontrol"
+
 gpg-connect-agent /bye > /dev/null 2>&1
+
+# Force the current shell to use the GPG socket for the remainder of the script
+export SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket)
+export GPG_TTY=$(tty)
 
 # 3. Link SSH keys to GPG (sshcontrol)
 # Use ssh-add to "register" them with the running gpg-agent
@@ -80,7 +92,7 @@ for key in $HOME/.ssh/id_{rsa,ed25519,ecdsa}; do
     if [ -f "$key" ]; then
         # This tells gpg-agent to take control of this key
         # On Arch, this automatically updates ~/.gnupg/sshcontrol
-        SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket) ssh-add "$key"
+        ssh-add "$key"
         echo "Linked $key to gpg-agent."
     fi
 done
