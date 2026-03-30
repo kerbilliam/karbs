@@ -1,51 +1,95 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
-GPGHOME=${GNUPGHOME:-$HOME/.gnupg}
+check_deps() {
+	local missing_deps=()
+	for tool in "$@"; do
+		if ! command -v "$tool" >/dev/null 2>&1; then
+			missing_deps+=("$tool")
+		fi
+	done
 
-# --- 1. Install Dependencies ---
-echo "Installing GPG and Pinentry tools..."
-sudo pacman -S --needed gnupg pinentry git
+	if [ ${#missing_deps[@]} -ne 0 ]; then
+		echo "The following dependencies are missing: ${missing_deps[*]}"
+		read -p "Would you like to install them via pacman? [y/N]: " install_confirm
+		if [[ "$install_confirm" =~ ^[Yy]$ ]]; then
+			sudo pacman -S --noconfirm "${missing_deps[@]}"
+		else
+			echo "Exiting. Please install dependencies manually."
+			exit 1
+		fi
+	fi
+}
 
-# --- 2. Configure GPG Agent ---
-echo "Configuring gpg-agent..."
-mkdir -p "$GPGHOME"
-chmod 700 "$GPGHOME" # make safer permissions
+# --- checking deps ---
+check_deps git gpg pinentry
 
-cat <<EOF > "$GPGHOME/gpg-agent.conf"
+# Ensure GNUPGHOME is set; fallback to default if not
+: "${GNUPGHOME:=$HOME/.gnupg}"
+mkdir -p "$GNUPGHOME"
+chmod 700 "$GNUPGHOME"
+
+# Function to generate a new SSH key
+generate_ssh_key() {
+    read -rp "Enter your email for the SSH key: " email
+    ssh-keygen -t ed25519 -C "$email" -f "$HOME/.ssh/id_ed25519"
+    echo "SSH key generated at $HOME/.ssh/id_ed25519"
+}
+
+# Check for existing keys
+# --- 3. SSH Key Handling ---
+SH_KEYS=()
+for key in "$HOME"/.ssh/id_{rsa,ed25519,ecdsa}; do
+    if [[ -f "$key" && ! "$key" =~ \.pub$ ]]; then
+        SH_KEYS+=("$key")
+    fi
+done
+
+if [ ${#SH_KEYS[@]} -eq 0 ]; then
+    echo "No SSH private keys found in $HOME/.ssh/"
+    echo "1) Exit to add keys manually"
+    echo "2) Generate a new Ed25519 key now"
+    echo "3) Continue anyway (not recommended)"
+    read -p "Select an option [1-3]: " opt
+    
+    case $opt in
+        1) echo "Exiting..."; exit 1 ;;
+        2) generate_ssh_key ;;
+        3) echo "Continuing..." ;;
+        *) echo "Invalid option. Exiting..."; exit 1 ;;
+    esac
+fi
+
+echo "--- Configuring gpg-agent for SSH emulation ---"
+
+# 1. Setup gpg-agent.conf
+cat > "$GNUPGHOME/gpg-agent.conf" <<EOF
 enable-ssh-support
-default-cache-ttl 3600
+default-cache-ttl 7200
 max-cache-ttl 28800
-default-cache-ttl-ssh 3600
-max-cache-ttl-ssh 28800
 pinentry-program /usr/bin/pinentry-qt
 EOF
 
-# --- 3. Setup Systemd Socket Activation ---
-echo "Enabling GPG Agent sockets..."
-systemctl --user enable --now gpg-agent.socket
-systemctl --user enable --now gpg-agent-ssh.socket
+# 2. Start/Restart the agent
+gpgconf --kill gpg-agent
+gpg-connect-agent /bye > /dev/null 2>&1
 
-# --- 4. Handle the SSH Key ---
-if [[ ! -f "$HOME/.ssh/id_ed25519" ]]; then
-    echo "No SSH key found. Generating a new one..."
-    echo "Note: If you are using this key to connect to GitHub, it must be the same as your GitHub eamil address."
-    read -r -p "Enter email for key: " email
-    ssh-keygen -t ed25519 -C "$email" -f "$HOME/.ssh/id_ed25519"
-fi
+# 3. Link SSH keys to GPG (sshcontrol)
+# Use ssh-add to "register" them with the running gpg-agent
+echo "--- Linking SSH keys to GPG (sshcontrol) ---"
+for key in $HOME/.ssh/id_{rsa,ed25519,ecdsa}; do
+    if [ -f "$key" ]; then
+        # This tells gpg-agent to take control of this key
+        # On Arch, this automatically updates ~/.gnupg/sshcontrol
+        SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket) ssh-add "$key"
+        echo "Linked $key to gpg-agent."
+    fi
+done
 
-# --- 5. Update .ssh/config ---
-mkdir -p ~/.ssh
-chmod 700 ~/.ssh
-if [[ ! -f "$HOME/.ssh/config" ]] || ! grep -q "AddKeysToAgent" "$HOME/.ssh/config"; then
-    cat <<EOF >> "$HOME/.ssh/config"
+# 4. Global Git Signing Config
+echo "--- Configuring Git for automatic signing ---"
+git config --global commit.gpgsign true
+git config --global gpg.program gpg
 
-Host *
-    AddKeysToAgent yes
-    IdentityFile ~/.ssh/id_ed25519
-EOF
-    chmod 600 "$HOME/.ssh/config"
-fi
-
-echo "-------------------------------------------------------"
-echo "GPG SSH SETUP COMPLETE"
-echo "-------------------------------------------------------"
+echo "--- Done! ---"
+echo "Note: If you haven't yet, you must set your Git signing key:"
+echo "git config --global user.signingkey <YOUR_GPG_KEY_ID>"
