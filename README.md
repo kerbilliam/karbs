@@ -1,5 +1,5 @@
 # Kerb's Auto-Rice Bootstrapping Scripts (KARBS)
-*Work in Progress*
+*Work in Progress: **DO NOT USE***
 
 `karbs.sh` works and has no bugs(?).
 
